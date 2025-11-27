@@ -1,4 +1,5 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
+import * as pdfjsLib from 'pdfjs-dist/legacy/build/pdf.mjs';
 
 export const config = {
   api: {
@@ -33,28 +34,37 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(400).json({ error: 'Only PDF files are supported for parsing' });
     }
 
-    // Dynamically import pdf-parse to handle potential import errors
-    let pdf;
-    try {
-      // @ts-ignore
-      pdf = (await import("pdf-parse")).default;
-    } catch (importError) {
-      console.error("Failed to import pdf-parse:", importError);
-      return res.status(500).json({
-        error: 'PDF parsing library not available in serverless environment',
-        details: 'Please contact support'
-      });
-    }
-
     const base64Data = fileData.replace(/^data:application\/pdf;base64,/, "");
     const buffer = Buffer.from(base64Data, "base64");
+    const uint8Array = new Uint8Array(buffer);
 
-    // Use pdf-parse correctly as a function
-    const data = await pdf(buffer);
-    const text = data.text.trim();
+    // Load PDF document using pdfjs-dist
+    const loadingTask = pdfjsLib.getDocument({
+      data: uint8Array,
+      useSystemFonts: true,
+    });
+
+    const pdfDocument = await loadingTask.promise;
+    const numPages = pdfDocument.numPages;
+
+    let fullText = '';
+
+    // Extract text from each page
+    for (let pageNum = 1; pageNum <= numPages; pageNum++) {
+      const page = await pdfDocument.getPage(pageNum);
+      const textContent = await page.getTextContent();
+      const pageText = textContent.items
+        .map((item: any) => item.str)
+        .join(' ');
+      fullText += pageText + '\n';
+    }
+
+    const text = fullText.trim();
 
     if (!text) {
-      return res.status(400).json({ error: 'Could not extract text from PDF. The file might be empty or image-based.' });
+      return res.status(400).json({
+        error: 'Could not extract text from PDF. The file might be empty or image-based.'
+      });
     }
 
     res.json({ content: text });
