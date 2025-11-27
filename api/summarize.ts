@@ -1,11 +1,18 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
+// Use the same environment variable as the server
+const apiKey = process.env.AI_INTEGRATIONS_GEMINI_API_KEY || process.env.GEMINI_API_KEY || "";
+
+if (!apiKey) {
+  console.error("Missing API key: AI_INTEGRATIONS_GEMINI_API_KEY or GEMINI_API_KEY not set");
+}
+
+const genAI = new GoogleGenerativeAI(apiKey);
 
 async function summarizeText(content: string): Promise<string> {
   const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-  
+
   const prompt = `You are an expert document summarizer. Provide a clear, well-structured summary of the following text.
 
 Guidelines:
@@ -34,6 +41,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
+  // Check if API key is configured
+  if (!apiKey) {
+    console.error("API key not configured");
+    return res.status(500).json({ error: 'Server configuration error: API key not set' });
+  }
+
   try {
     const { content } = req.body;
 
@@ -49,6 +62,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     res.json({ summary });
   } catch (error) {
     console.error("Summarization error:", error);
-    res.status(500).json({ error: 'Failed to generate summary. Please try again.' });
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    res.status(500).json({
+      error: 'Failed to generate summary. Please try again.',
+      details: errorMessage
+    });
   }
 }

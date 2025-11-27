@@ -1,10 +1,11 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { PDFParse } from "pdf-parse";
+// @ts-ignore
+import pdf from "pdf-parse";
 
 export const config = {
   api: {
     bodyParser: {
-      sizeLimit: '10mb',
+      sizeLimit: '4mb',
     },
   },
 };
@@ -27,13 +28,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     const base64Data = fileData.replace(/^data:application\/pdf;base64,/, "");
     const buffer = Buffer.from(base64Data, "base64");
-    const uint8Array = new Uint8Array(buffer);
 
-    const parser = new PDFParse({ data: uint8Array });
-    const textResult = await parser.getText();
-    const text = textResult.text.trim();
-
-    await parser.destroy();
+    // Use pdf-parse correctly as a function
+    const data = await pdf(buffer);
+    const text = data.text.trim();
 
     if (!text) {
       return res.status(400).json({ error: 'Could not extract text from PDF. The file might be empty or image-based.' });

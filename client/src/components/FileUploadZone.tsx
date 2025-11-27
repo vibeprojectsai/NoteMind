@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 
-const MAX_FILE_SIZE = 10 * 1024 * 1024;
+const MAX_FILE_SIZE = 4 * 1024 * 1024; // 4MB limit for Vercel serverless functions
 
 interface FileUploadZoneProps {
   onFileUpload: (file: File, content: string) => void;
@@ -15,12 +15,12 @@ interface FileUploadZoneProps {
 export function FileUploadZone({ onFileUpload, isLoading }: FileUploadZoneProps) {
   const [isParsing, setIsParsing] = useState(false);
   const { toast } = useToast();
-  
+
   const onDrop = useCallback(
     async (acceptedFiles: File[]) => {
       if (acceptedFiles.length === 0) return;
       const file = acceptedFiles[0];
-      
+
       if (file.size > MAX_FILE_SIZE) {
         toast({
           title: "File too large",
@@ -29,7 +29,7 @@ export function FileUploadZone({ onFileUpload, isLoading }: FileUploadZoneProps)
         });
         return;
       }
-      
+
       if (file.type === "application/pdf") {
         setIsParsing(true);
         try {
@@ -46,12 +46,12 @@ export function FileUploadZone({ onFileUpload, isLoading }: FileUploadZoneProps)
                   mimeType: file.type,
                 }),
               });
-              
+
               if (!response.ok) {
                 const error = await response.json();
                 throw new Error(error.error || "Failed to parse PDF");
               }
-              
+
               const data = await response.json();
               onFileUpload(file, data.content);
             } catch (error) {
@@ -113,7 +113,7 @@ export function FileUploadZone({ onFileUpload, isLoading }: FileUploadZoneProps)
       data-testid="dropzone-file-upload"
     >
       <input {...getInputProps()} data-testid="input-file" />
-      
+
       <div className="flex flex-col items-center gap-4">
         <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
           {showLoading ? (
@@ -122,7 +122,7 @@ export function FileUploadZone({ onFileUpload, isLoading }: FileUploadZoneProps)
             <Upload className="h-8 w-8 text-primary" />
           )}
         </div>
-        
+
         <div className="space-y-2">
           <h3 className="text-lg font-medium">
             {isParsing ? "Parsing PDF..." : isDragActive ? "Drop your file here" : "Upload a document"}
@@ -131,7 +131,7 @@ export function FileUploadZone({ onFileUpload, isLoading }: FileUploadZoneProps)
             {isParsing ? "Extracting text from your document" : "Drag and drop your file here, or click to browse"}
           </p>
         </div>
-        
+
         <div className="flex flex-wrap justify-center gap-2">
           <Badge variant="secondary" className="gap-1">
             <FileText className="h-3 w-3" />
@@ -146,7 +146,7 @@ export function FileUploadZone({ onFileUpload, isLoading }: FileUploadZoneProps)
             .pdf
           </Badge>
         </div>
-        
+
         <p className="text-xs text-muted-foreground">
           Maximum file size: 10MB
         </p>
