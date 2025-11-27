@@ -1,7 +1,6 @@
 {
   "buildCommand": "npm run build",
   "outputDirectory": "dist/public",
-  "framework": "vite",
   "functions": {
     "api/*.ts": {
       "memory": 1024,
