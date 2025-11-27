@@ -1,0 +1,26 @@
+node_modules/
+dist/
+.env
+.env.local
+.env.production
+.DS_Store
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.vercel
+build/
+coverage/
+.turbo
+.next/
+out/
+
+# Test files
+test-pdf-import.ts
+repro-pdf.ts
+check-pdf-export.ts
