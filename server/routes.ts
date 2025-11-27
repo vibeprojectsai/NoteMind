@@ -62,16 +62,16 @@ export async function registerRoutes(
       const buffer = Buffer.from(base64Data, "base64");
       const uint8Array = new Uint8Array(buffer);
 
-      // Disable worker for serverless environment
-      pdfjsLib.GlobalWorkerOptions.workerSrc = '';
+      // Set worker path for pdfjs-dist
+      pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
+        'pdfjs-dist/legacy/build/pdf.worker.mjs',
+        import.meta.url
+      ).href;
 
       // Load PDF document using pdfjs-dist
       const loadingTask = pdfjsLib.getDocument({
         data: uint8Array,
         useSystemFonts: true,
-        useWorkerFetch: false,
-        isEvalSupported: false,
-        disableFontFace: true,
       });
 
       const pdfDocument = await loadingTask.promise;
