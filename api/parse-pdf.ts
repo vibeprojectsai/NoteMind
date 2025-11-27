@@ -38,21 +38,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const buffer = Buffer.from(base64Data, "base64");
     const uint8Array = new Uint8Array(buffer);
 
-    // Set worker path for pdfjs-dist (required for serverless)
-    try {
-      pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
-        'pdfjs-dist/legacy/build/pdf.worker.mjs',
-        import.meta.url
-      ).href;
-    } catch (e) {
-      // Fallback for environments where import.meta.url isn't available
+    // Set worker path for pdfjs-dist
+    if (!pdfjsLib.GlobalWorkerOptions.workerSrc) {
       pdfjsLib.GlobalWorkerOptions.workerSrc = 'pdfjs-dist/legacy/build/pdf.worker.mjs';
     }
 
     // Load PDF document using pdfjs-dist
     const loadingTask = pdfjsLib.getDocument({
       data: uint8Array,
-      useSystemFonts: true,
     });
 
     const pdfDocument = await loadingTask.promise;

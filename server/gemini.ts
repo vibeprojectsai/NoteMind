@@ -1,14 +1,16 @@
-import { GoogleGenAI } from "@google/genai";
+import { GoogleGenerativeAI } from "@google/generative-ai";
 
-const ai = new GoogleGenAI({
-  apiKey: process.env.AI_INTEGRATIONS_GEMINI_API_KEY,
-  httpOptions: {
-    apiVersion: "",
-    baseUrl: process.env.AI_INTEGRATIONS_GEMINI_BASE_URL,
-  },
-});
+const apiKey = process.env.AI_INTEGRATIONS_GEMINI_API_KEY || process.env.GEMINI_API_KEY || "";
+
+if (!apiKey) {
+  console.error("Missing API key: AI_INTEGRATIONS_GEMINI_API_KEY or GEMINI_API_KEY not set");
+}
+
+const genAI = new GoogleGenerativeAI(apiKey);
 
 export async function summarizeText(content: string): Promise<string> {
+  const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+
   const prompt = `You are an expert document summarizer. Provide a clear, well-structured summary of the following text.
 
 IMPORTANT: Do NOT use asterisks (*) or double asterisks (**) for formatting. Use plain text only. No markdown bold or italic formatting.
@@ -29,10 +31,7 @@ ${content}
 
 Summary:`;
 
-  const response = await ai.models.generateContent({
-    model: "gemini-2.5-flash",
-    contents: prompt,
-  });
-
-  return response.text || "Unable to generate summary.";
+  const result = await model.generateContent(prompt);
+  const response = await result.response;
+  return response.text() || "Unable to generate summary.";
 }
